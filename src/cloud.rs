@@ -1,10 +1,10 @@
 use std::{
     cell::RefCell,
     hash::{Hash, Hasher},
-    fmt::{Debug, Display}
+    fmt::{Debug, Display}, collections::{HashMap, VecDeque}
 };
 
-use fxhash::FxHashMap;
+use fxhash::{FxBuildHasher, FxHashMap};
 
 use crate::{
     iter::{
@@ -58,8 +58,8 @@ pub trait CombineWith {
 /// 
 /// assert_eq!(&y, data.get(&"y".to_string()).unwrap());
 /// ```
-pub struct DataCloud<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> {
-    nodes: RefCell<FxHashMap<K, &'a V>>,
+pub struct DataCloud<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq, S = FxBuildHasher> {
+    nodes: RefCell<HashMap<K, &'a V, S>>,
 }
 
 impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> DataCloud<'a, K, V> {
@@ -375,6 +375,44 @@ impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> DataCloud<'a, K, V> {
         let collected = unsafe { self.nodes.as_ptr().as_mut().unwrap() }.iter_mut().collect::<Vec<(&'a K, &mut &'a V)>>();
         return IterMut::new(collected);
     }
+
+    /// Consumes the DataCloud and returns a vector of tuples containing `(K, &'a V)`.
+    /// 
+    /// # Examples
+    /// ```
+    /// use cloudr::DataCloud;
+    /// use cloudr::iter::IterMut;
+    /// 
+    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    /// let y = 3;
+    /// cloud.insert("y".to_string(), &y);
+    /// 
+    /// let mut vec: Vec<(String, &i32)> = cloud.into_vec();
+    /// assert_eq!(vec, vec![("y".to_string(), &y)]);
+    /// ```
+    pub fn into_vec(self) -> Vec<(K, &'a V)> {
+        let collected = self.nodes.into_inner().into_iter().collect::<Vec<_>>();
+        collected
+    }
+
+    /// Consumes the DataCloud and returns a VecDeque of tuples containing `(K, &'a V)`.
+    /// 
+    /// # Examples
+    /// ```
+    /// use cloudr::DataCloud;
+    /// use cloudr::iter::IterMut;
+    /// use std::collections::VecDeque;
+    /// 
+    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    /// let y = 3;
+    /// cloud.insert("y".to_string(), &y);
+    /// 
+    /// let mut vec: VecDeque<(String, &i32)> = cloud.into_vecdeque();
+    /// ```
+    pub fn into_vecdeque(self) -> VecDeque<(K, &'a V)> {
+        let collected = self.nodes.into_inner().into_iter().collect::<VecDeque<_>>();
+        collected
+    }
 }
 
 impl<'a, K: PartialEq + Eq + Hash + Clone, V: PartialEq + Eq> Clone for DataCloud<'a, K, V> {
@@ -506,5 +544,7 @@ impl<'a, K: PartialEq + Eq + Hash + Clone, V: PartialEq + Eq> CombineWith for Da
     }
 }
 
-unsafe impl<'a, K: PartialEq + Eq + Hash + Send, V: PartialEq + Eq + Send> Send for DataCloud<'a, K, V> {}
+unsafe impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> Send for DataCloud<'a, K, V> {}
 unsafe impl<'a, K: PartialEq + Eq + Hash + Send + Sync, V: PartialEq + Eq + Send + Sync> Sync for DataCloud<'a, K, V> {}
+
+impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> !Copy for DataCloud<'a, K, V> {}

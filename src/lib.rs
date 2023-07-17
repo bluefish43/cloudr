@@ -38,7 +38,8 @@
 //! use cloudr::DataCloud;
 
 //! let cloud: DataCloud<String, i32> = DataCloud::new();
-//! cloud.insert("key".to_string(), 42);
+//! let x = 42;
+//! cloud.insert("key".to_string(), &x);
 
 //! if let Some(value) = cloud.get(&"key".to_string()) {
 //!     println!("Value: {}", value); // Output: Value: 42
@@ -52,7 +53,8 @@
 //! use cloudr::DataCloud;
 
 //! let cloud: DataCloud<String, i32> = DataCloud::new();
-//! cloud.insert("key".to_string(), 42);
+//! let x = 42;
+//! cloud.insert("key".to_string(), &x);
 
 //! if let Some(value) = cloud.remove(&"key".to_string()) {
 //!     println!("Removed value: {}", value); // Output: Removed value: 42
@@ -66,7 +68,8 @@
 //! use cloudr::DataCloud;
 
 //! let cloud: DataCloud<String, i32> = DataCloud::new();
-//! cloud.insert("key".to_string(), 42);
+//! let x = 42;
+//! cloud.insert("key".to_string(), &x);
 
 //! if cloud.contains_key(&"key".to_string()) {
 //!     println!("The key exists in the DataCloud.");
@@ -80,8 +83,10 @@
 //! use cloudr::DataCloud;
 
 //! let cloud: DataCloud<String, i32> = DataCloud::new();
-//! cloud.insert("key1".to_string(), 42);
-//! cloud.insert("key2".to_string(), 24);
+//! let x = 42;
+//! let y = 24;
+//! cloud.insert("key1".to_string(), &x);
+//! cloud.insert("key2".to_string(), &y);
 
 //! for (key, value) in cloud.into_pairs() {
 //!     println!("Key: {}, Value: {}", key, value);
@@ -93,12 +98,15 @@
 
 //! ```rust
 //! use cloudr::DataCloud;
+//! use cloudr::CombineWith;
 
 //! let cloud1: DataCloud<String, i32> = DataCloud::new();
-//! cloud1.insert("key1".to_string(), 42);
+//! let x = 42;
+//! cloud1.insert("key1".to_string(), &x);
 
 //! let cloud2: DataCloud<String, i32> = DataCloud::new();
-//! cloud2.insert("key2".to_string(), 24);
+//! let y = 24;
+//! cloud2.insert("key2".to_string(), &y);
 
 //! let combined_cloud = cloud1.combine_with(vec![cloud2]);
 //! ```
@@ -112,8 +120,10 @@
 //! ## License
 //! Cloudr is licensed under the MIT License.
 
+#![feature(negative_impls)]
+#![allow(suspicious_auto_trait_impls)]
+
 mod cloud;
 pub mod iter;
 pub mod error;
-
 pub use cloud::*;
