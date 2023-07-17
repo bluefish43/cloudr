@@ -1,7 +1,8 @@
 use std::{
     cell::RefCell,
-    hash::{Hash, Hasher},
-    fmt::{Debug, Display}, collections::{HashMap, VecDeque}
+    hash::{Hash, Hasher, BuildHasher},
+    fmt::{Debug, Display}, collections::{HashMap, VecDeque},
+    ops::{Index, IndexMut}
 };
 
 use fxhash::{FxBuildHasher, FxHashMap};
@@ -17,9 +18,7 @@ use crate::{
     error::NullPointerError
 };
 
-pub trait IntoOwned {
-    type Output;
-
+pub trait IntoOwned<K, V, S = FxBuildHasher> {
     /// Returns an owned form of the object.
     /// 
     /// ```
@@ -35,13 +34,17 @@ pub trait IntoOwned {
     /// 
     /// let map: FxHashMap<String, String> = data.into_owned();
     /// ```
-    fn into_owned(&self) -> Self::Output;
+    fn into_owned(&self) -> HashMap<K, V, S>;
 }
 
 pub trait CombineWith {
     fn combine_with(&self, others: Vec<Self>) -> Self
     where
         Self: Sized;
+}
+
+pub trait AsPointer {
+    fn as_ptr(&self) -> *const Self;
 }
 
 /// An abstract data structure can store values without moving them.
@@ -77,7 +80,7 @@ impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> DataCloud<'a, K, V> {
         }
     }
 
-    /// Inserts a new key into the cloud
+    /// Inserts a new key into the cloud.
     /// 
     /// # Examples
     /// ```
@@ -91,6 +94,25 @@ impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> DataCloud<'a, K, V> {
     pub fn insert(&self, key: K, value: &'a V) -> Option<&'a V> {
         let mut nodes = self.nodes.borrow_mut();
         nodes.insert(key, value)
+    }
+
+    /// Inserts a new key into the cloud if the key doesn't already exist, and returns whether the key was inserted or not.
+    /// 
+    /// # Examples
+    /// ```
+    /// use cloudr::DataCloud;
+    /// 
+    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    /// let y = 3;
+    /// cloud.or_insert("y".to_string(), &y);
+    /// ```
+    pub fn or_insert(&self, key: K, value: &'a V) -> bool {
+        let mut nodes = self.nodes.borrow_mut();
+        if !nodes.contains_key(&key) {
+            nodes.insert(key, value);
+            return false
+        }
+        true
     }
 
     /// Gets the reference stored in the cloud.
@@ -164,6 +186,48 @@ impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> DataCloud<'a, K, V> {
         }
     }
 
+    /// Merges in place the DataCloud with the other one by consuming the other DataCloud.
+    /// 
+    /// # Examples
+    /// ```
+    /// use cloudr::DataCloud;
+    /// 
+    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    /// let y = 3;
+    /// cloud.insert("y".to_string(), &y);
+    /// 
+    /// let cloud2: DataCloud<'_, String, i32> = DataCloud::new();
+    /// let x = 56;
+    /// cloud2.insert("x".to_string(), &x);
+    /// 
+    /// cloud.merge_in_place(cloud2);
+    /// ```
+    pub fn merge_in_place(&self, other: DataCloud<'a, K, V>) {
+        self.nodes.borrow_mut().extend(other.nodes.into_inner().into_iter())
+    }
+
+    /// Merges in place the other DataCloud with this one by consuming this DataCloud.
+    /// 
+    /// # Examples
+    /// ```
+    /// use cloudr::DataCloud;
+    /// 
+    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    /// let y = 3;
+    /// cloud.insert("y".to_string(), &y);
+    /// 
+    /// let cloud2: DataCloud<'_, String, i32> = DataCloud::new();
+    /// let x = 56;
+    /// cloud2.insert("x".to_string(), &x);
+    /// 
+    /// cloud2.merge_with(&cloud);
+    /// 
+    /// println!("{:?}", cloud);
+    /// ```
+    pub fn merge_with(self, other: &DataCloud<'a, K, V>) {
+        other.nodes.borrow_mut().extend(self.nodes.into_inner().into_iter())
+    }
+
     /// Returns if the cloud contains a reference indexed by this key.
     /// 
     /// # Examples
@@ -227,6 +291,25 @@ impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> DataCloud<'a, K, V> {
     /// ```
     pub fn into_pairs(self) -> IntoPairs<K, &'a V> {
         return IntoPairs::new(self.nodes.into_inner().into_iter().collect());
+    }
+
+    /// Returns the cloud into an iterator of `(K, *mut V)` key-value pairs in arbitrary order.
+    /// 
+    /// # Examples
+    /// ```
+    /// use cloudr::DataCloud;
+    /// 
+    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    /// 
+    /// let mut x = 63;
+    /// cloud.insert("x".to_string(), &mut x);
+    /// 
+    /// for (key, value) in cloud.into_pairs() {
+    ///     println!("({key}: {})", *value);
+    /// }
+    /// ```
+    pub unsafe fn into_raw_pairs(self) -> IntoPairs<K, *mut V> {
+        return IntoPairs::new(self.nodes.into_inner().into_iter().map(|(k, v)| (k, v as *const V as *mut V)).collect());
     }
 
     /// Clears the `DataCloud`'s key-value pairs into a fresh, new one.
@@ -381,7 +464,6 @@ impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> DataCloud<'a, K, V> {
     /// # Examples
     /// ```
     /// use cloudr::DataCloud;
-    /// use cloudr::iter::IterMut;
     /// 
     /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
     /// let y = 3;
@@ -400,7 +482,6 @@ impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> DataCloud<'a, K, V> {
     /// # Examples
     /// ```
     /// use cloudr::DataCloud;
-    /// use cloudr::iter::IterMut;
     /// use std::collections::VecDeque;
     /// 
     /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
@@ -412,6 +493,311 @@ impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> DataCloud<'a, K, V> {
     pub fn into_vecdeque(self) -> VecDeque<(K, &'a V)> {
         let collected = self.nodes.into_inner().into_iter().collect::<VecDeque<_>>();
         collected
+    }
+
+    /// Inserts multiple elements at a time in the DataCloud.
+    /// 
+    /// # Examples
+    /// ```
+    /// use cloudr::DataCloud;
+    /// 
+    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    /// 
+    /// let x = 42;
+    /// let y = 24;
+    /// 
+    /// let pairs: Vec<(String, &i32)> = vec![("x".to_string(), &x), ("y".to_string(), &y)];
+    /// cloud.insert_all(pairs);
+    /// ```
+    pub fn insert_all(&self, pairs: Vec<(K, &'a V)>) -> Vec<Option<&'a V>> {
+        let mut out = Vec::new();
+        for (key, value) in pairs {
+            out.push(self.insert(key, value));
+        }
+        out
+    }
+
+    /// Gets multiple elements at a time in the DataCloud.
+    /// 
+    /// # Examples
+    /// ```
+    /// use cloudr::DataCloud;
+    /// 
+    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    /// 
+    /// let x = 42;
+    /// let y = 24;
+    /// 
+    /// let x_string = "x".to_string();
+    /// let y_string = "y".to_string();
+    /// 
+    /// cloud.insert("x".to_string(), &x);
+    /// cloud.insert("y".to_string(), &y);
+    /// 
+    /// let pairs = vec![&x_string, &y_string];
+    /// 
+    /// assert_eq!(cloud.get_all(pairs), vec![Some(&x), Some(&y)])
+    /// ```
+    pub fn get_all(&self, keys: Vec<&K>) -> Vec<Option<&'a V>> {
+        let mut out = Vec::new();
+        for key in keys {
+            out.push(self.get(key));
+        }
+        out
+    }
+
+     /// Gets multiple elements at a time in the DataCloud as mutable references.
+    /// 
+    /// # Examples
+    /// ```
+    /// use cloudr::DataCloud;
+    /// 
+    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    /// 
+    /// let mut x = 42;
+    /// let mut y = 24;
+    /// 
+    /// let x_string = "x".to_string();
+    /// let y_string = "y".to_string();
+    /// 
+    /// cloud.insert("x".to_string(), &x);
+    /// cloud.insert("y".to_string(), &y);
+    /// 
+    /// let pairs = vec![&x_string, &y_string];
+    /// 
+    /// let mut_pairs: Vec<Option<&mut i32>> = cloud.get_mut_all(pairs);
+    /// ```
+    pub fn get_mut_all(&self, keys: Vec<&K>) -> Vec<Option<&'a mut V>> {
+        let mut out = Vec::new();
+        for key in keys {
+            out.push(self.get_mut(key));
+        }
+        out
+    }
+
+    /// Returns the DataCloud as a constant pointer to a `DataCloud<'a, K, V>`.
+    /// 
+    /// # Examples
+    /// ```
+    /// use cloudr::DataCloud;
+    /// 
+    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    /// 
+    /// let pointer: *const DataCloud<'_, String, i32> = cloud.as_ptr();
+    /// ```
+    pub fn as_ptr(&self) -> *const DataCloud<'a, K, V> {
+        return self as *const DataCloud<'a, K, V>
+    }
+
+    /// Returns the DataCloud's inner HashMap as a boxed shared reference `Box<&HashMap<K, &'a V, S>`.
+    /// 
+    /// # Examples
+    /// ```
+    /// use cloudr::DataCloud;
+    /// use fxhash::FxHashMap;
+    /// 
+    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    /// 
+    /// let boxed_ref: Box<&FxHashMap<String, &i32>> = cloud.as_boxed_ref();
+    /// ```
+    pub fn as_boxed_ref(&self) -> Box<&FxHashMap<K, &'a V>> {
+        return Box::new(unsafe { self.nodes.as_ptr().as_ref() }.unwrap())
+    }
+
+    /// Returns the DataCloud's inner HashMap as a boxed raw pointer `Box<*const HashMap<K, &'a V, S>`.
+    /// 
+    /// # Examples
+    /// ```
+    /// use cloudr::DataCloud;
+    /// use fxhash::FxHashMap;
+    /// 
+    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    /// 
+    /// let boxed_ptr: Box<*const FxHashMap<String, &i32>> = unsafe {
+    ///     cloud.as_boxed_ptr()
+    /// };
+    /// ```
+    pub unsafe fn as_boxed_ptr(&self) -> Box<*const FxHashMap<K, &'a V>> {
+        return Box::new(self.nodes.as_ptr())
+    }
+
+    /// Returns the DataCloud's inner HashMap as a boxed mutable reference `Box<&mut HashMap<K, &'a V, S>`.
+    /// 
+    /// # Examples
+    /// ```
+    /// use cloudr::DataCloud;
+    /// use fxhash::FxHashMap;
+    /// 
+    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    /// 
+    /// let boxed_ref: Box<&mut FxHashMap<String, &i32>> = unsafe {
+    ///     cloud.as_boxed_mut()
+    /// };
+    /// ```
+    pub unsafe fn as_boxed_mut(&self) -> Box<&mut FxHashMap<K, &'a V>> {
+        return Box::new(unsafe { self.nodes.as_ptr().as_mut().unwrap() })
+    }
+
+    /// Retains only the elements specified by the predicate function.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cloudr::DataCloud;
+    ///
+    /// let cloud: DataCloud<String, i32> = DataCloud::new();
+    /// cloud.insert("x".to_string(), &42);
+    /// cloud.insert("y".to_string(), &24);
+    ///
+    /// cloud.retain(|key, value| {
+    ///     *value > &30
+    /// });
+    ///
+    /// assert!(cloud.contains_key(&"x".to_string()));
+    /// assert!(!cloud.contains_key(&"y".to_string()));
+    /// ```
+    pub fn retain<F>(&self, mut predicate: F)
+    where
+        F: FnMut(&K, &&'a V) -> bool,
+    {
+        let mut nodes = self.nodes.borrow_mut();
+        nodes.retain(|key, value| predicate(key, value));
+    }
+
+    /// Returns a new DataCloud from the given vector of keys and values `Vec<(K, &'a V)>`.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use cloudr::DataCloud;
+    ///
+    /// let mut vector = Vec::new();
+    /// vector.push((String::from("Banana"), &1));
+    /// 
+    /// let cloud: DataCloud<'_, String, i32> = DataCloud::from_vec(vector);
+    /// ```
+    pub fn from_vec<T: Into<Vec<(K, &'a V)>>>(vec: T) -> Self {
+        let mut hash = FxHashMap::default();
+
+        for (k, v) in vec.into() {
+            hash.insert(k, v);
+        }
+
+        Self::from_hashmap(hash)
+    }
+}
+
+impl<'a, K: PartialEq + Eq + Hash + Clone, V: PartialEq + Eq + Clone> DataCloud<'a, K, V> {
+    /// Merges the DataCloud with another and returns the resulting one.
+    /// The other DataCloud will always have priority. So, if
+    /// there are two conflicting keys, the other one will always have priority.
+    /// 
+    /// # Examples
+    ///
+    /// ```
+    /// use cloudr::DataCloud;
+    ///
+    /// let cloud: DataCloud<String, i32> = DataCloud::new();
+    /// cloud.insert("x".to_string(), &42);
+    /// cloud.insert("y".to_string(), &24);
+    ///
+    /// let cloud2: DataCloud<String, i32> = DataCloud::new();
+    /// cloud2.insert("z".to_string(), &64);
+    /// 
+    /// assert!(cloud.merge(&cloud2).contains_key(&"z".to_string()));
+    /// ```
+    pub fn merge(&self, other: &DataCloud<'a, K, V>) -> DataCloud<'a, K, V> {
+        let new_cloud = DataCloud::new();
+        for (key, value) in self.nodes.borrow().iter() {
+            new_cloud.insert(key.clone(), value.clone());
+        }
+
+        for (key, value) in other.nodes.borrow().iter() {
+            new_cloud.insert(key.clone(), value.clone());
+        }
+
+        new_cloud
+    }
+
+    /// Merges the DataCloud with other instances and returns the resulting one.
+    /// The last element of the vector `others` will always have priority. So, if
+    /// there are two conflicting keys, the last one will always have priority.
+    /// 
+    /// # Examples
+    ///
+    /// ```
+    /// use cloudr::DataCloud;
+    ///
+    /// let cloud: DataCloud<String, i32> = DataCloud::new();
+    /// cloud.insert("x".to_string(), &42);
+    /// cloud.insert("y".to_string(), &24);
+    ///
+    /// let cloud2: DataCloud<String, i32> = DataCloud::new();
+    /// cloud2.insert("z".to_string(), &64);
+    /// 
+    /// assert!(cloud.merge_all(vec![&cloud2]).contains_key(&"z".to_string()));
+    /// ```
+    pub fn merge_all(&self, others: Vec<&DataCloud<'a, K, V>>) -> DataCloud<'a, K, V> {
+        let new_cloud = DataCloud::new();
+        for (key, value) in self.nodes.borrow().iter() {
+            new_cloud.insert(key.clone(), value.clone());
+        }
+
+        for other in others {
+            for (key, value) in other.nodes.borrow().iter() {
+                new_cloud.insert(key.clone(), value.clone());
+            }
+        }
+
+        new_cloud
+    }
+}
+
+impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> Index<&K> for DataCloud<'a, K, V> {
+    type Output = V;
+
+    fn index(&self, index: &K) -> &Self::Output {
+        return self.get(index).unwrap()
+    }
+}
+
+impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> IndexMut<&K> for DataCloud<'a, K, V> {
+    fn index_mut(&mut self, index: &K) -> &mut Self::Output {
+        return self.get_mut(index).unwrap()
+    }
+}
+
+impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> Extend<(K, &'a V)> for DataCloud<'a, K, V> {
+    fn extend<T: IntoIterator<Item = (K, &'a V)>>(&mut self, iter: T) {
+        let mut nodes = self.nodes.borrow_mut();
+        let mut iter = iter.into_iter();
+        while let Some((k, v)) = iter.next() {
+            nodes.insert(k, v);
+        }
+    }
+}
+
+impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> FromIterator<(K, &'a V)> for DataCloud<'a, K, V> {
+    fn from_iter<T: IntoIterator<Item = (K, &'a V)>>(iter: T) -> Self {
+        return Self::from_vec(iter.into_iter().collect::<Vec<_>>())
+    }
+}
+
+impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> Into<Vec<(K, &'a V)>> for DataCloud<'a, K, V> {
+    fn into(self) -> Vec<(K, &'a V)> {
+        return self.into_vec()
+    }
+}
+
+impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> Into<VecDeque<(K, &'a V)>> for DataCloud<'a, K, V> {
+    fn into(self) -> VecDeque<(K, &'a V)> {
+        return self.into_vecdeque()
+    }
+}
+
+impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> From<FxHashMap<K, &'a V>> for DataCloud<'a, K, V> {
+    fn from(value: FxHashMap<K, &'a V>) -> Self {
+        return Self::from_hashmap(value)
     }
 }
 
@@ -490,11 +876,9 @@ impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> Default for DataCloud<'a, 
     }
 }
 
-impl<'a, K: PartialEq + Eq + Hash + Clone, V: PartialEq + Eq + Clone> IntoOwned for DataCloud<'a, K, V> {
-    type Output = FxHashMap<K, V>;
-
-    fn into_owned(&self) -> Self::Output {
-        let mut new_map = FxHashMap::default();
+impl<'a, K: PartialEq + Eq + Hash + Clone, V: PartialEq + Eq + Clone, S: BuildHasher + Default> IntoOwned<K, V, S> for DataCloud<'a, K, V> {
+    fn into_owned(&self) -> HashMap<K, V, S> {
+        let mut new_map = HashMap::with_hasher(S::default());
 
         for (k, v) in self.nodes.borrow().iter() {
             new_map.insert(k.clone(), v.clone().clone());
@@ -505,7 +889,7 @@ impl<'a, K: PartialEq + Eq + Hash + Clone, V: PartialEq + Eq + Clone> IntoOwned 
 }
 
 impl<'a, K: PartialEq + Eq + Hash + Clone, V: PartialEq + Eq> CombineWith for DataCloud<'a, K, V> {
-    /// Enables the data cloud to combine with other instances of the same type
+    /// Enables the DataCloud to combine with other instances of the same type
     /// # Examples
     /// ```
     /// use cloudr::DataCloud;
@@ -530,7 +914,7 @@ impl<'a, K: PartialEq + Eq + Hash + Clone, V: PartialEq + Eq> CombineWith for Da
     fn combine_with(&self, others: Vec<Self>) -> Self
         where
             Self: Sized {
-        let new_cloud: DataCloud<'_, _, _> = DataCloud::new();
+        let new_cloud = DataCloud::<K, V, FxBuildHasher>::new();
         for cloud in others.into_iter() {
             let mut iter = cloud.into_iter();
             while let Some((key, val)) = iter.next() {
