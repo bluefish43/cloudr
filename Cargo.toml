@@ -1,6 +1,6 @@
 [package]
 name = "cloudr"
-version = "1.2.2"
+version = "1.2.3"
 edition = "2021"
 description = "A library that offers an abstract data structure for storing and managing values without moving them. It provides efficient key-value insertion, retrieval, and removal operations, allowing you to conveniently handle your data. With its simplicity and ease of use, Cloudr is designed to simplify data storage in your Rust projects. Explore the capabilities of Cloudr and streamline your data management tasks."
 authors = ["bluefish43"]
