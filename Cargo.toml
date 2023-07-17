@@ -2,12 +2,11 @@
 name = "cloudr"
 version = "1.2.1"
 edition = "2021"
-description = "Cloudr is a Rust library that offers an abstract data structure for storing and managing values without moving them. It provides efficient key-value insertion, retrieval, and removal operations, allowing you to conveniently handle your data. With its simplicity and ease of use, Cloudr is designed to simplify data storage in your Rust projects. Explore the capabilities of Cloudr and streamline your data management tasks."
+description = "A library that offers an abstract data structure for storing and managing values without moving them. It provides efficient key-value insertion, retrieval, and removal operations, allowing you to conveniently handle your data. With its simplicity and ease of use, Cloudr is designed to simplify data storage in your Rust projects. Explore the capabilities of Cloudr and streamline your data management tasks."
 authors = ["bluefish43"]
 readme = "./README.md"
 license = "MIT"
 homepage = "https://github.com/bluefish43/cloudr"
-documentation = "./DOCS.md"
 repository = "https://github.com/bluefish43/cloudr"
 license-file = "./LICENSE"
 keywords = ["data", "structure", "reference", "cloud"]
