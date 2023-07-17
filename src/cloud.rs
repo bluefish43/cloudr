@@ -1,3 +1,119 @@
+//!! # Cloudr Documentation
+
+//! Cloudr is a Rust library that provides an abstract data structure called DataCloud for storing and managing values without moving them. It offers efficient key-value insertion, retrieval, and removal operations, making it convenient to handle your data.
+
+//! ## Table of Contents
+//! - Installation
+//! - Usage
+//!   - Creating a DataCloud
+//!   - Inserting and Retrieving Values
+//!   - Removing Values
+//!   - Checking for Key Existence
+//!   - Iterating over Key-Value   - Pairs
+//!   - Combining DataCloud Instances
+
+//! - Examples
+//! - Contributing
+//! - License
+//! ## Installation
+
+//! You can add Cloudr as a dependency in your Cargo.toml file:
+
+//! ```toml
+//! [dependencies]
+//! cloudr = "0.1.0"
+//! ```
+
+//! ## Usage
+//! ### Creating a DataCloud
+//! To start using Cloudr, you need to create an instance of DataCloud. Here's an example:
+
+//! ```rust
+//! use cloudr::DataCloud;
+
+//! let cloud: DataCloud<String, i32> = DataCloud::new();
+//! ```
+//! ### Inserting and Retrieving Values
+//! You can insert key-value pairs into the DataCloud and retrieve values using the keys. Here's an example:
+
+//! ```rust
+//! use cloudr::DataCloud;
+
+//! let cloud: DataCloud<String, i32> = DataCloud::new();
+//! cloud.insert("key".to_string(), 42);
+
+//! if let Some(value) = cloud.get(&"key".to_string()) {
+//!     println!("Value: {}", value); // Output: Value: 42
+//! }
+//! ```
+
+//! ### Removing Values
+//! Values can be removed from the DataCloud using the remove method. Here's an example:
+
+//! ```rust
+//! use cloudr::DataCloud;
+
+//! let cloud: DataCloud<String, i32> = DataCloud::new();
+//! cloud.insert("key".to_string(), 42);
+
+//! if let Some(value) = cloud.remove(&"key".to_string()) {
+//!     println!("Removed value: {}", value); // Output: Removed value: 42
+//! }
+//! ```
+
+//! ### Checking for Key Existence
+//! You can check if a key exists in the DataCloud using the contains_key method. Here's an example:
+
+//! ```rust
+//! use cloudr::DataCloud;
+
+//! let cloud: DataCloud<String, i32> = DataCloud::new();
+//! cloud.insert("key".to_string(), 42);
+
+//! if cloud.contains_key(&"key".to_string()) {
+//!     println!("The key exists in the DataCloud.");
+//! }
+//! ```
+
+//! ### Iterating over Key-Value Pairs
+//! You can iterate over the key-value pairs stored in the DataCloud using the into_pairs method. Here's an example:
+
+//! ```rust
+//! use cloudr::DataCloud;
+
+//! let cloud: DataCloud<String, i32> = DataCloud::new();
+//! cloud.insert("key1".to_string(), 42);
+//! cloud.insert("key2".to_string(), 24);
+
+//! for (key, value) in cloud.into_pairs() {
+//!     println!("Key: {}, Value: {}", key, value);
+//! }
+//! ```
+
+//! ### Combining DataCloud Instances
+//! You can combine multiple DataCloud instances into a single instance using the combine_with method. Here's an example:
+
+//! ```rust
+//! use cloudr::DataCloud;
+
+//! let cloud1: DataCloud<String, i32> = DataCloud::new();
+//! cloud1.insert("key1".to_string(), 42);
+
+//! let cloud2: DataCloud<String, i32> = DataCloud::new();
+//! cloud2.insert("key2".to_string(), 24);
+
+//! let combined_cloud = cloud1.combine_with(vec![cloud2]);
+//! ```
+
+//! ## Examples
+//! For more usage examples, please refer to the examples directory in the Cloudr repository.
+
+//! ## Contributing
+//! Contributions to Cloudr are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a pull request on the [GitHub repository](https://!github.com/bluefish43/cloudr).
+
+//! ## License
+//! Cloudr is licensed under the MIT License.
+
 use std::{
     cell::RefCell,
     hash::{Hash, Hasher},
@@ -20,21 +136,21 @@ use crate::{
 pub trait IntoOwned {
     type Output;
 
-    /// Returns an owned form of the object.
-    /// 
-    /// ```
-    /// use cloudr::DataCloud;
-    /// use fxhash::FxHashMap;
-    /// use cloudr::IntoOwned;
-    /// 
-    /// let data: DataCloud<'_, String, String> = DataCloud::new();
-    /// let x = "Hello master".to_string();
-    /// let y = String::from("hello, world!");
-    /// data.insert("x".to_string(), &x);
-    /// data.insert("y".to_string(), &y);
-    /// 
-    /// let map: FxHashMap<String, String> = data.into_owned();
-    /// ```
+    //!/ Returns an owned form of the object.
+    //!/ 
+    //!/ ```
+    //!/ use cloudr::DataCloud;
+    //!/ use fxhash::FxHashMap;
+    //!/ use cloudr::IntoOwned;
+    //!/ 
+    //!/ let data: DataCloud<'_, String, String> = DataCloud::new();
+    //!/ let x = "Hello master".to_string();
+    //!/ let y = String::from("hello, world!");
+    //!/ data.insert("x".to_string(), &x);
+    //!/ data.insert("y".to_string(), &y);
+    //!/ 
+    //!/ let map: FxHashMap<String, String> = data.into_owned();
+    //!/ ```
     fn into_owned(&self) -> Self::Output;
 }
 
@@ -44,68 +160,68 @@ pub trait CombineWith {
         Self: Sized;
 }
 
-/// An abstract data structure can store values without moving them.
-/// 
-/// # Examples
-/// ```
-/// use cloudr::DataCloud;
-/// 
-/// let data: DataCloud<'_, String, String> = DataCloud::new();
-/// let x = "Hello master".to_string();
-/// let y = String::from("hello, world!");
-/// data.insert("x".to_string(), &x);
-/// data.insert("y".to_string(), &y);
-/// 
-/// assert_eq!(&y, data.get(&"y".to_string()).unwrap());
-/// ```
+//!/ An abstract data structure can store values without moving them.
+//!/ 
+//!/ # Examples
+//!/ ```
+//!/ use cloudr::DataCloud;
+//!/ 
+//!/ let data: DataCloud<'_, String, String> = DataCloud::new();
+//!/ let x = "Hello master".to_string();
+//!/ let y = String::from("hello, world!");
+//!/ data.insert("x".to_string(), &x);
+//!/ data.insert("y".to_string(), &y);
+//!/ 
+//!/ assert_eq!(&y, data.get(&"y".to_string()).unwrap());
+//!/ ```
 pub struct DataCloud<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> {
     nodes: RefCell<FxHashMap<K, &'a V>>,
 }
 
 impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> DataCloud<'a, K, V> {
-    /// Returns a new instance of a DataCloud.
-    /// 
-    /// # Examples
-    /// ```
-    /// use cloudr::DataCloud;
-    /// 
-    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
-    /// ```
+    //!/ Returns a new instance of a DataCloud.
+    //!/ 
+    //!/ # Examples
+    //!/ ```
+    //!/ use cloudr::DataCloud;
+    //!/ 
+    //!/ let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    //!/ ```
     pub fn new() -> DataCloud<'a, K, V> {
         return DataCloud {
             nodes: RefCell::new(FxHashMap::default()),
         }
     }
 
-    /// Inserts a new key into the cloud
-    /// 
-    /// # Examples
-    /// ```
-    /// use cloudr::DataCloud;
-    /// 
-    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
-    /// let y = 3;
-    /// let inserted_before: Option<&i32> = cloud.insert("y".to_string(), &y);
-    /// 
-    /// ```
+    //!/ Inserts a new key into the cloud
+    //!/ 
+    //!/ # Examples
+    //!/ ```
+    //!/ use cloudr::DataCloud;
+    //!/ 
+    //!/ let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    //!/ let y = 3;
+    //!/ let inserted_before: Option<&i32> = cloud.insert("y".to_string(), &y);
+    //!/ 
+    //!/ ```
     pub fn insert(&self, key: K, value: &'a V) -> Option<&'a V> {
         let mut nodes = self.nodes.borrow_mut();
         nodes.insert(key, value)
     }
 
-    /// Gets the reference stored in the cloud.
-    /// 
-    /// # Examples
-    /// ```
-    /// use cloudr::DataCloud;
-    /// 
-    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
-    /// let y = 3;
-    /// cloud.insert("y".to_string(), &y);
-    /// 
-    /// let y_ref: Option<&i32> = cloud.get(&"y".to_string());
-    /// assert_eq!(&y, y_ref.unwrap());
-    /// ```
+    //!/ Gets the reference stored in the cloud.
+    //!/ 
+    //!/ # Examples
+    //!/ ```
+    //!/ use cloudr::DataCloud;
+    //!/ 
+    //!/ let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    //!/ let y = 3;
+    //!/ cloud.insert("y".to_string(), &y);
+    //!/ 
+    //!/ let y_ref: Option<&i32> = cloud.get(&"y".to_string());
+    //!/ assert_eq!(&y, y_ref.unwrap());
+    //!/ ```
     pub fn get(&self, key_to_search_for: &K) -> Option<&'a V> {
         let nodes = self.nodes.borrow();
         for (key, value) in nodes.iter() {
@@ -118,19 +234,19 @@ impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> DataCloud<'a, K, V> {
         return None;
     }
 
-    /// Gets the reference stored in the cloud as a mutable reference.
-    /// 
-    /// # Examples
-    /// ```
-    /// use cloudr::DataCloud;
-    /// 
-    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
-    /// let mut y = 3;
-    /// cloud.insert("y".to_string(), &mut y);
-    /// 
-    /// 
-    /// let y_ref: Option<&mut i32> = cloud.get_mut(&"y".to_string());
-    /// ```
+    //!/ Gets the reference stored in the cloud as a mutable reference.
+    //!/ 
+    //!/ # Examples
+    //!/ ```
+    //!/ use cloudr::DataCloud;
+    //!/ 
+    //!/ let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    //!/ let mut y = 3;
+    //!/ cloud.insert("y".to_string(), &mut y);
+    //!/ 
+    //!/ 
+    //!/ let y_ref: Option<&mut i32> = cloud.get_mut(&"y".to_string());
+    //!/ ```
     pub fn get_mut(&self, key_to_search_for: &K) -> Option<&'a mut V> {
         let nodes = self.nodes.borrow();
         for (key, value) in nodes.iter() {
@@ -143,18 +259,18 @@ impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> DataCloud<'a, K, V> {
         return None;
     }
 
-    /// Removes the reference stored in the cloud and returns it if it exists.
-    /// 
-    /// # Examples
-    /// ```
-    /// use cloudr::DataCloud;
-    /// 
-    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
-    /// let mut y = 3;
-    /// cloud.insert("y".to_string(), &mut y);
-    /// 
-    /// let y_ref = cloud.remove(&"y".to_string()).unwrap();
-    /// ```
+    //!/ Removes the reference stored in the cloud and returns it if it exists.
+    //!/ 
+    //!/ # Examples
+    //!/ ```
+    //!/ use cloudr::DataCloud;
+    //!/ 
+    //!/ let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    //!/ let mut y = 3;
+    //!/ cloud.insert("y".to_string(), &mut y);
+    //!/ 
+    //!/ let y_ref = cloud.remove(&"y".to_string()).unwrap();
+    //!/ ```
     pub fn remove(&self, key: &K) -> Option<&'a V> {
         match self.nodes.borrow_mut().remove(key) {
             Some(value) => {
@@ -164,105 +280,105 @@ impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> DataCloud<'a, K, V> {
         }
     }
 
-    /// Returns if the cloud contains a reference indexed by this key.
-    /// 
-    /// # Examples
-    /// ```
-    /// use cloudr::DataCloud;
-    /// 
-    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
-    /// let mut x = 63;
-    /// cloud.insert("x".to_string(), &mut x);
-    /// 
-    /// assert!(cloud.contains_key(&"x".to_string()));
-    /// ```
+    //!/ Returns if the cloud contains a reference indexed by this key.
+    //!/ 
+    //!/ # Examples
+    //!/ ```
+    //!/ use cloudr::DataCloud;
+    //!/ 
+    //!/ let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    //!/ let mut x = 63;
+    //!/ cloud.insert("x".to_string(), &mut x);
+    //!/ 
+    //!/ assert!(cloud.contains_key(&"x".to_string()));
+    //!/ ```
     pub fn contains_key(&self, key: &K) -> bool {
         return self.nodes.borrow().contains_key(key)
     }
 
-    /// Returns if the cloud contains the specified reference as a value.
-    /// 
-    /// # Examples
-    /// ```
-    /// use cloudr::DataCloud;
-    /// 
-    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
-    /// let x = 63;
-    /// cloud.insert("x".to_string(), &x);
-    /// 
-    /// assert!(cloud.contains_value(&x));
-    /// ```
+    //!/ Returns if the cloud contains the specified reference as a value.
+    //!/ 
+    //!/ # Examples
+    //!/ ```
+    //!/ use cloudr::DataCloud;
+    //!/ 
+    //!/ let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    //!/ let x = 63;
+    //!/ cloud.insert("x".to_string(), &x);
+    //!/ 
+    //!/ assert!(cloud.contains_value(&x));
+    //!/ ```
     pub fn contains_value(&self, key: &V) -> bool {
         return self.nodes.borrow().values().collect::<Vec<_>>().contains(&&key)
     }
 
-    /// Returns if the cloud does not contain any key-value pairs.
-    /// 
-    /// # Examples
-    /// ```
-    /// use cloudr::DataCloud;
-    /// 
-    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
-    /// 
-    /// assert!(cloud.is_empty());
-    /// ```
+    //!/ Returns if the cloud does not contain any key-value pairs.
+    //!/ 
+    //!/ # Examples
+    //!/ ```
+    //!/ use cloudr::DataCloud;
+    //!/ 
+    //!/ let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    //!/ 
+    //!/ assert!(cloud.is_empty());
+    //!/ ```
     pub fn is_empty(&self) -> bool {
         return self.nodes.borrow().is_empty();
     }
 
-    /// Returns the cloud into an iterator of `(K, &'a V)` key-value pairs in arbitrary order.
-    /// 
-    /// # Examples
-    /// ```
-    /// use cloudr::DataCloud;
-    /// 
-    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
-    /// 
-    /// let mut x = 63;
-    /// cloud.insert("x".to_string(), &mut x);
-    /// 
-    /// for (key, value) in cloud.into_pairs() {
-    ///     println!("({key}: {value})");
-    /// }
-    /// ```
+    //!/ Returns the cloud into an iterator of `(K, &'a V)` key-value pairs in arbitrary order.
+    //!/ 
+    //!/ # Examples
+    //!/ ```
+    //!/ use cloudr::DataCloud;
+    //!/ 
+    //!/ let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    //!/ 
+    //!/ let mut x = 63;
+    //!/ cloud.insert("x".to_string(), &mut x);
+    //!/ 
+    //!/ for (key, value) in cloud.into_pairs() {
+    //!/     println!("({key}: {value})");
+    //!/ }
+    //!/ ```
     pub fn into_pairs(self) -> IntoPairs<K, &'a V> {
         return IntoPairs::new(self.nodes.into_inner().into_iter().collect());
     }
 
-    /// Clears the `DataCloud`'s key-value pairs into a fresh, new one.
-    /// 
-    /// # Examples
-    /// ```
-    /// use cloudr::DataCloud;
-    /// 
-    /// let cloud: DataCloud<'_, usize, i128> = DataCloud::new();
-    /// 
-    /// let v = 54;
-    /// 
-    /// cloud.insert(3, &v);
-    /// 
-    /// cloud.clear();
-    /// 
-    /// assert_eq!(DataCloud::new(), cloud);
-    /// ```
+    //!/ Clears the `DataCloud`'s key-value pairs into a fresh, new one.
+    //!/ 
+    //!/ # Examples
+    //!/ ```
+    //!/ use cloudr::DataCloud;
+    //!/ 
+    //!/ let cloud: DataCloud<'_, usize, i128> = DataCloud::new();
+    //!/ 
+    //!/ let v = 54;
+    //!/ 
+    //!/ cloud.insert(3, &v);
+    //!/ 
+    //!/ cloud.clear();
+    //!/ 
+    //!/ assert_eq!(DataCloud::new(), cloud);
+    //!/ ```
     pub fn clear(&self) {
         self.nodes.borrow_mut().clear();
     }
 
-    /// Inserts a new key into the cloud from a raw pointer
-    /// 
-    /// # Examples
-    /// ```
-    /// use cloudr::DataCloud;
-    /// use cloudr::error::NullPointerError;
-    /// 
-    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
-    /// let y = 3;
-    /// let inserted_before: Result<Option<&i32>, NullPointerError> = unsafe {
-    ///     cloud.insert_from_raw("y".to_string(), &y as *const i32)
-    /// };
-    /// 
-    /// ```
+    //!/ Inserts a new key into the cloud from a raw pointer
+    //!/ 
+    //!/ # Examples
+    //!/ ```
+    //!/ use cloudr::DataCloud;
+    //!/ use cloudr::error::NullPointerError;
+    //!/ 
+    //!/ let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    //!/ let y = 3;
+    //!/ let inserted_before: Result<Option<&i32>, NullPointerError> = unsafe {
+    //!/     cloud.insert_from_raw("y".to_string(), &y as *const i32)
+    //!/ };
+    //!/ 
+    //!/ ```
     pub unsafe fn insert_from_raw(&self, key: K, value: *const V) -> Result<Option<&'a V>, NullPointerError> {
         if value.is_null() {
             return Err(NullPointerError(String::from("Tried to insert null pointer in DataCloud")));
@@ -271,20 +387,20 @@ impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> DataCloud<'a, K, V> {
         Ok(self.insert(key, reference))
     }
 
-    /// Gets the reference stored in the cloud as a mutable raw pointer.
-    /// 
-    /// # Examples
-    /// ```
-    /// use cloudr::DataCloud;
-    /// 
-    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
-    /// let y = 3;
-    /// cloud.insert("y".to_string(), &y);
-    /// 
-    /// let pointer: Option<*mut i32> = unsafe {
-    ///     cloud.get_as_raw(&"y".to_string())
-    /// };
-    /// ```
+    //!/ Gets the reference stored in the cloud as a mutable raw pointer.
+    //!/ 
+    //!/ # Examples
+    //!/ ```
+    //!/ use cloudr::DataCloud;
+    //!/ 
+    //!/ let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    //!/ let y = 3;
+    //!/ cloud.insert("y".to_string(), &y);
+    //!/ 
+    //!/ let pointer: Option<*mut i32> = unsafe {
+    //!/     cloud.get_as_raw(&"y".to_string())
+    //!/ };
+    //!/ ```
     pub unsafe fn get_as_raw(&self, key_to_search_for: &K) -> Option<*mut V> {
         let nodes = self.nodes.borrow();
         for (key, value) in nodes.iter() {
@@ -297,38 +413,38 @@ impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> DataCloud<'a, K, V> {
         return None;
     }
 
-    /// Builds a new DataCloud from a `FxHashMap<K, &'a V>`.
-    /// 
-    /// # Examples
-    /// ```
-    /// use cloudr::DataCloud;
-    /// use fxhash::FxHashMap;
-    /// 
-    /// let mut map: FxHashMap<String, &i32> = FxHashMap::default();
-    /// let y = 3;
-    /// map.insert("y".to_string(), &y);
-    /// 
-    /// let cloud = DataCloud::from_hashmap(map);
-    /// ```
+    //!/ Builds a new DataCloud from a `FxHashMap<K, &'a V>`.
+    //!/ 
+    //!/ # Examples
+    //!/ ```
+    //!/ use cloudr::DataCloud;
+    //!/ use fxhash::FxHashMap;
+    //!/ 
+    //!/ let mut map: FxHashMap<String, &i32> = FxHashMap::default();
+    //!/ let y = 3;
+    //!/ map.insert("y".to_string(), &y);
+    //!/ 
+    //!/ let cloud = DataCloud::from_hashmap(map);
+    //!/ ```
     pub fn from_hashmap(hashmap: FxHashMap<K, &'a V>) -> DataCloud<'a, K, V> {
         return Self {
             nodes: RefCell::new(hashmap),
         }
     }
 
-    /// Calls a function for each key-value pair of the cloud and returns an iterator over the resulted pairs.
-    /// 
-    /// # Examples
-    /// ```
-    /// use cloudr::DataCloud;
-    /// use cloudr::iter::Map;
-    /// 
-    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
-    /// let y = 3;
-    /// cloud.insert("y".to_string(), &y);
-    /// 
-    /// let iterator: Map<String, i32> = cloud.map(|(k, v)| { return ( k.to_uppercase(), **v - 1 ) });
-    /// ```
+    //!/ Calls a function for each key-value pair of the cloud and returns an iterator over the resulted pairs.
+    //!/ 
+    //!/ # Examples
+    //!/ ```
+    //!/ use cloudr::DataCloud;
+    //!/ use cloudr::iter::Map;
+    //!/ 
+    //!/ let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    //!/ let y = 3;
+    //!/ cloud.insert("y".to_string(), &y);
+    //!/ 
+    //!/ let iterator: Map<String, i32> = cloud.map(|(k, v)| { return ( k.to_uppercase(), **v - 1 ) });
+    //!/ ```
     pub fn map<F>(&self, f: F) -> Map<K, V>
     where
         F: Fn((&K, &&'a V)) -> (K, V) {
@@ -336,41 +452,41 @@ impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> DataCloud<'a, K, V> {
             return Map::new(collected);
     }
 
-    /// Returns an iterator over the elements of the cloud as `&'a` references.
-    /// 
-    /// # Examples
-    /// ```
-    /// use cloudr::DataCloud;
-    /// use cloudr::iter::Iter;
-    /// 
-    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
-    /// let y = 3;
-    /// cloud.insert("y".to_string(), &y);
-    /// 
-    /// let mut iterator: Iter<'_, String, i32> = cloud.iter();
-    /// 
-    /// assert_eq!((&"y".to_string(), &&3), iterator.next().unwrap());
-    /// ```
+    //!/ Returns an iterator over the elements of the cloud as `&'a` references.
+    //!/ 
+    //!/ # Examples
+    //!/ ```
+    //!/ use cloudr::DataCloud;
+    //!/ use cloudr::iter::Iter;
+    //!/ 
+    //!/ let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    //!/ let y = 3;
+    //!/ cloud.insert("y".to_string(), &y);
+    //!/ 
+    //!/ let mut iterator: Iter<'_, String, i32> = cloud.iter();
+    //!/ 
+    //!/ assert_eq!((&"y".to_string(), &&3), iterator.next().unwrap());
+    //!/ ```
     pub fn iter(&'a self) -> Iter<'a, K, V> {
         let collected = unsafe { self.nodes.as_ptr().as_ref().unwrap() }.iter().collect::<Vec<_>>();
         return Iter::new(collected);
     }
 
-    /// Returns an iterator over the elements of the cloud as `&'a mut` references.
-    /// 
-    /// # Examples
-    /// ```
-    /// use cloudr::DataCloud;
-    /// use cloudr::iter::IterMut;
-    /// 
-    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
-    /// let y = 3;
-    /// cloud.insert("y".to_string(), &y);
-    /// 
-    /// let mut iterator: IterMut<'_, String, i32> = cloud.iter_mut();
-    /// 
-    /// assert_eq!((&"y".to_string(), &mut &3), iterator.next().unwrap());
-    /// ```
+    //!/ Returns an iterator over the elements of the cloud as `&'a mut` references.
+    //!/ 
+    //!/ # Examples
+    //!/ ```
+    //!/ use cloudr::DataCloud;
+    //!/ use cloudr::iter::IterMut;
+    //!/ 
+    //!/ let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    //!/ let y = 3;
+    //!/ cloud.insert("y".to_string(), &y);
+    //!/ 
+    //!/ let mut iterator: IterMut<'_, String, i32> = cloud.iter_mut();
+    //!/ 
+    //!/ assert_eq!((&"y".to_string(), &mut &3), iterator.next().unwrap());
+    //!/ ```
     pub fn iter_mut(&'a self) -> IterMut<'a, K, V> {
         let collected = unsafe { self.nodes.as_ptr().as_mut().unwrap() }.iter_mut().collect::<Vec<(&'a K, &mut &'a V)>>();
         return IterMut::new(collected);
@@ -436,9 +552,9 @@ impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq> Eq for DataCloud<'a, K, V>
 
 impl<'a, K: PartialEq + Eq + Hash, V: PartialEq + Eq + Hash> Hash for DataCloud<'a, K, V> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        // Hash the length of the map
+        //! Hash the length of the map
         self.nodes.borrow().len().hash(state);
-        // Hash each key-value pair in the map
+        //! Hash each key-value pair in the map
         for (k, v) in self.nodes.borrow().iter() {
             k.hash(state);
             v.hash(state);
@@ -467,28 +583,28 @@ impl<'a, K: PartialEq + Eq + Hash + Clone, V: PartialEq + Eq + Clone> IntoOwned 
 }
 
 impl<'a, K: PartialEq + Eq + Hash + Clone, V: PartialEq + Eq> CombineWith for DataCloud<'a, K, V> {
-    /// Enables the data cloud to combine with other instances of the same type
-    /// # Examples
-    /// ```
-    /// use cloudr::DataCloud;
-    /// use cloudr::CombineWith;
-    /// 
-    /// let cloud: DataCloud<'_, String, i32> = DataCloud::new();
-    /// let y = 3;
-    /// cloud.insert("y".to_string(), &y);
-    /// 
-    /// let cloud2: DataCloud<'_, String, i32> = DataCloud::new();
-    /// let x = 4;
-    /// cloud2.insert("x".to_string(), &x);
-    /// 
-    /// let final_cloud: DataCloud<'_, String, i32> = cloud.combine_with(vec![cloud2]);
-    /// 
-    /// let cloud3: DataCloud<'_, String, i32> = DataCloud::new();
-    /// cloud3.insert("y".to_string(), &y);
-    /// cloud3.insert("x".to_string(), &x);
-    /// 
-    /// assert_eq!(final_cloud, cloud3);
-    /// ```
+    //!/ Enables the data cloud to combine with other instances of the same type
+    //!/ # Examples
+    //!/ ```
+    //!/ use cloudr::DataCloud;
+    //!/ use cloudr::CombineWith;
+    //!/ 
+    //!/ let cloud: DataCloud<'_, String, i32> = DataCloud::new();
+    //!/ let y = 3;
+    //!/ cloud.insert("y".to_string(), &y);
+    //!/ 
+    //!/ let cloud2: DataCloud<'_, String, i32> = DataCloud::new();
+    //!/ let x = 4;
+    //!/ cloud2.insert("x".to_string(), &x);
+    //!/ 
+    //!/ let final_cloud: DataCloud<'_, String, i32> = cloud.combine_with(vec![cloud2]);
+    //!/ 
+    //!/ let cloud3: DataCloud<'_, String, i32> = DataCloud::new();
+    //!/ cloud3.insert("y".to_string(), &y);
+    //!/ cloud3.insert("x".to_string(), &x);
+    //!/ 
+    //!/ assert_eq!(final_cloud, cloud3);
+    //!/ ```
     fn combine_with(&self, others: Vec<Self>) -> Self
         where
             Self: Sized {
