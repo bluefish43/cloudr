@@ -1,5 +1,3 @@
-//!! # Cloudr Documentation
-
 //! Cloudr is a Rust library that provides an abstract data structure called DataCloud for storing and managing values without moving them. It offers efficient key-value insertion, retrieval, and removal operations, making it convenient to handle your data.
 
 //! ## Table of Contents
